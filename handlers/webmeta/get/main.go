@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net/http"
 
 	"github.com.LHebditch.htmlmeta/handlers/webmeta"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -27,7 +28,8 @@ func Handler(ctx context.Context, event GetMetaEvent) (string, error) {
 	if event.URL == "" {
 		panic("invalid url")
 	}
-	meta, err := webmeta.GetWebMeta(log, event.URL)
+	client := &http.Client{}
+	meta, err := webmeta.GetWebMeta(log, event.URL, client)
 	if err != nil {
 		panic("failed to get web meta from url")
 	}
