@@ -2,6 +2,7 @@ package webmeta
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net/http"
 	"testing"
@@ -15,7 +16,6 @@ type MockClient struct {
 	Error error
 }
 
-// Do is the mock client's `Do` func
 func (m *MockClient) Do(req *http.Request) (*http.Response, error) {
 	return &http.Response{
 		StatusCode: 200,
@@ -23,20 +23,22 @@ func (m *MockClient) Do(req *http.Request) (*http.Response, error) {
 	}, m.Error
 }
 
+const mockHtml string = `
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test Title</title>
+		<meta property="og:foo" content="bar" />
+		<meta property="og:title" content="test og title" />
+		<meta name="foo" content="bar" />
+		<meta name="title" content="test meta title" />
+	</head>
+</html>
+`
+
 func TestHandlerGetsMeta(t *testing.T) {
 	client := &MockClient{
-		Response: []byte(`
-			<!DOCTYPE html>
-			<html>
-				<head>
-					<title>Test Title</title>
-					<meta property="og:foo" content="bar" />
-					<meta property="og:title" content="test og title" />
-					<meta name="foo" content="bar" />
-					<meta name="title" content="test meta title" />
-				</head>
-			</html>
-		`),
+		Response: []byte(mockHtml),
 		Error: nil,
 	}
 	log, _ := zap.NewDevelopment()
@@ -53,12 +55,51 @@ func TestHandlerGetsMeta(t *testing.T) {
 	assert.Equal(t, "Test Title", meta.Title)
 }
 
-func TestHandlerReturnsErrorFromURL(t *testing.T) {}
+func TestHandlerReturnsErrorFromURL(t *testing.T) {
+	expectedError := errors.New("Mock Error")
+	client := &MockClient{
+		Response: []byte(mockHtml),
+		Error: expectedError,
+	}
+	log, _ := zap.NewDevelopment()
+	meta, err := GetWebMeta(log, "https://test.com", client)
+	assert.Equal(t, err, expectedError)
+	assert.Equal(t, meta.Title, "")
+}
 
-func TestHandlerTrimsTabsandNewLines(t *testing.T) {}
+func TestHandlerTrimsTabsandNewLines(t *testing.T) {
+	client := &MockClient{
+		Response: []byte(`
+		<!DOCTYPE html>
+		<html>
+			<head>
+				<title>Test Title</title>
+				<meta property="og:foo" content="bar" />
+				<meta property="og:title" content="test og title
+				" />
+				<meta name="foo" content="bar" />
+				<meta name="title" content="test meta title	" />
+			</head>
+		</html>
+		`),
+		Error: nil,
+	}
+	log, _ := zap.NewDevelopment()
+	meta, _ := GetWebMeta(log, "https://test.com", client)
+	assert.Equal(t, meta.Meta["title"], "test meta title")
+	assert.Equal(t, meta.OG["title"], "test og title")
+}
 
-func TestExtractMetaInto(t *testing.T) {}
+func TestTrimAll(t *testing.T) {
+	withTab := "some text\t"
+	withNewline := "some text\n"
+	withReturn := "some text\r"
 
-func TestTrimAll(t *testing.T) {}
+	withAll := "some\n text\t\r"
 
-func TestCreateRequest(t *testing.T) {}
+	expected := "some text"
+	assert.Equal(t, TrimAll(withTab), expected)
+	assert.Equal(t, TrimAll(withNewline), expected)
+	assert.Equal(t, TrimAll(withReturn), expected)
+	assert.Equal(t, TrimAll(withAll), expected)
+}

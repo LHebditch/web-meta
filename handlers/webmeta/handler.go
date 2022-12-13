@@ -24,7 +24,7 @@ func TrimAll(s string) string {
 }
 
 func ExtractMetaInto(meta *models.HtmlMeta) (extractor models.HtmlExtractor) {
-	return func(i int, s *goquery.Selection) {
+	return func(_ int, s *goquery.Selection) {
 		prop := s.AttrOr("property", "")
 		name := s.AttrOr("name", "")
 		content := TrimAll(s.AttrOr("content", ""))
