@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com.LHebditch.htmlmeta/models"
+	"github.com/LHebditch/htmlmeta/models"
 	"github.com/PuerkitoBio/goquery"
 	"go.uber.org/zap"
 )
@@ -23,7 +23,7 @@ func TrimAll(s string) string {
 	return trimmed
 }
 
-func ExtractMetaInto(meta *models.HtmlMeta) (extractor models.HtmlExtractor) {
+func extractMetaInto(meta *models.HtmlMeta) (extractor models.HtmlExtractor) {
 	return func(_ int, s *goquery.Selection) {
 		prop := s.AttrOr("property", "")
 		name := s.AttrOr("name", "")
@@ -37,7 +37,7 @@ func ExtractMetaInto(meta *models.HtmlMeta) (extractor models.HtmlExtractor) {
 	}
 }
 
-func CreateRequest(log *zap.Logger, url string) (req *http.Request, err error) {
+func createRequest(log *zap.Logger, url string) (req *http.Request, err error) {
 	req, err = http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Error("failed to create request", zap.Error(err))
@@ -54,7 +54,7 @@ func CreateRequest(log *zap.Logger, url string) (req *http.Request, err error) {
 func GetWebMeta(log *zap.Logger, url string, client HTTPClient) (meta models.HtmlMeta, err error) {
 	log.With(zap.String("url", url))
 	log.Info("Processing request for web meta")
-	req, err := CreateRequest(log, url)
+	req, err := createRequest(log, url)
 	if err != nil {
 		log.Error("failed to create request", zap.Error(err))
 		return
@@ -75,7 +75,7 @@ func GetWebMeta(log *zap.Logger, url string, client HTTPClient) (meta models.Htm
 		return
 	}
 	meta = models.HtmlMeta{}
-	doc.Find("meta").Each(ExtractMetaInto(&meta))
+	doc.Find("meta").Each(extractMetaInto(&meta))
 	meta.Title = TrimAll(doc.Find("head > title").First().Text())
 	log.Info("Processed web meta request")
 	return

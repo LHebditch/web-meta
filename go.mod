@@ -1,4 +1,4 @@
-module github.com.LHebditch.htmlmeta
+module github.com/LHebditch/htmlmeta
 
 go 1.19
 

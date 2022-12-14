@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com.LHebditch.htmlmeta/handlers/webmeta"
+	"github.com/LHebditch/htmlmeta/handlers/webmeta"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"go.uber.org/zap"

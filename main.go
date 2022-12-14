@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com.LHebditch.htmlmeta/handlers/webmeta"
+	"github.com/LHebditch/htmlmeta/handlers/webmeta"
 	"go.uber.org/zap"
 )
 
